@@ -2,6 +2,7 @@ package export
 
 import (
 	"encoding/csv"
+	"fmt"
 	"os"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/api"
@@ -13,6 +14,8 @@ func CreateCSVs() {
 	// Get team membership
 	var teams []team.Team
 	teams = api.GetSourceOrganizationTeams()
+
+	fmt.Println("Found", len(teams), "teams")
 
 	// Create Membership CSV
 	createMembershipCSV(teams)

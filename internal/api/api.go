@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/team"
 	"github.com/shurcooL/githubv4"
@@ -51,7 +50,6 @@ var query struct {
 }
 
 func newGHClient(token string) *githubv4.Client {
-	fmt.Println("Using token: ", token)
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
 
