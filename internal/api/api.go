@@ -189,8 +189,8 @@ func GetTeamRepositories(team string) []map[string]string {
 func CreateTeam(name string, description string, privacy string, parentTeamId string) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
-	r := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
-	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), r)
+	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
+	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), t)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "Name must be unique for this org") {
@@ -202,12 +202,13 @@ func CreateTeam(name string, description string, privacy string, parentTeamId st
 	}
 }
 
-// func AddTeamRepository(teamId int64, repo string, permission string) {
-// 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+func AddTeamRepository(slug string, repo string, permission string) {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
-// 	_, err := client.Teams.AddTeamRepo(context.Background(), teamId, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
+	r := github.TeamAddTeamRepoOptions{Permission: permission}
+	_, err := client.Teams.AddTeamRepo(context.Background(), teamId, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
+	if err != nil {
+		panic(err)
+	}
+}

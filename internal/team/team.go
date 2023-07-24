@@ -32,12 +32,18 @@ func GetSourceOrganizationTeams() Teams {
 
 	teams := make([]Team, 0)
 	for _, team := range data {
+		// Fixing privacy values
+		privacy := "SECRET"
+		if team["Privacy"] != "SECRET" {
+			privacy = "closed"
+		}
+
 		teams = append(teams, Team{
 			Id:           team["Id"],
 			Name:         team["Name"],
 			Slug:         team["Slug"],
 			Description:  team["Description"],
-			Privacy:      team["Privacy"],
+			Privacy:      privacy,
 			ParentTeamId: team["ParentTeamId"],
 			Members:      getTeamMemberships(team["Slug"]),
 			Repositories: getTeamRepositories(team["Slug"]),
@@ -77,6 +83,9 @@ func getTeamRepositories(team string) []Repository {
 
 func (t Team) CreateTeam() {
 	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamId)
+	for _, repository := range t.Repositories {
+		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
+	}
 }
 
 func (t Teams) ExportTeamMemberships() [][]string {
