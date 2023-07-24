@@ -2,21 +2,39 @@ package api
 
 import (
 	"context"
+	"fmt"
+	"os"
+	"strings"
 
+	"github.com/gofri/go-github-ratelimit/github_ratelimit"
+	"github.com/google/go-github/github"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
 
-func newGHClient(token string) *githubv4.Client {
+func newGHGraphqlClient(token string) *githubv4.Client {
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
 
 	return githubv4.NewClient(httpClient)
 }
 
-func GetSourceOrganizationTeams() []string {
-	client := newGHClient(viper.GetString("source_token"))
+func newGHRestClient(token string) *github.Client {
+	ctx := context.Background()
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	tc := oauth2.NewClient(ctx, ts)
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(tc.Transport)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return github.NewClient(rateLimiter)
+}
+
+func GetSourceOrganizationTeams() []map[string]string {
+	client := newGHGraphqlClient(viper.GetString("SOURCE_TOKEN"))
 
 	var query struct {
 		Organization struct {
@@ -27,7 +45,14 @@ func GetSourceOrganizationTeams() []string {
 				}
 				Edges []struct {
 					Node struct {
-						Slug string
+						Id          string
+						Name        string
+						Description string
+						Slug        string
+						Privacy     string
+						ParentTeam  struct {
+							Id string
+						}
 					}
 				}
 			} `graphql:"teams(first: $first, after: $after)"`
@@ -40,7 +65,7 @@ func GetSourceOrganizationTeams() []string {
 		"after": (*githubv4.String)(nil),
 	}
 
-	teams := make([]string, 0)
+	var teams = []map[string]string{}
 	for {
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
@@ -48,7 +73,7 @@ func GetSourceOrganizationTeams() []string {
 		}
 
 		for _, team := range query.Organization.Teams.Edges {
-			teams = append(teams, team.Node.Slug)
+			teams = append(teams, map[string]string{"Id": team.Node.Id, "Name": team.Node.Name, "Slug": team.Node.Slug, "Description": team.Node.Description, "Privacy": team.Node.Privacy, "ParentTeamId": team.Node.ParentTeam.Id})
 		}
 
 		if !query.Organization.Teams.PageInfo.HasNextPage {
@@ -61,8 +86,8 @@ func GetSourceOrganizationTeams() []string {
 	return teams
 }
 
-func GetTeamMemberships(team string) [][]string {
-	client := newGHClient(viper.GetString("source_token"))
+func GetTeamMemberships(team string) []map[string]string {
+	client := newGHGraphqlClient(viper.GetString("source_token"))
 
 	var query struct {
 		Organization struct {
@@ -90,7 +115,7 @@ func GetTeamMemberships(team string) [][]string {
 		"after": (*githubv4.String)(nil),
 	}
 
-	var members [][]string
+	var members = []map[string]string{}
 	for {
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
@@ -98,7 +123,7 @@ func GetTeamMemberships(team string) [][]string {
 		}
 
 		for _, member := range query.Organization.Team.Members.Edges {
-			members = append(members, []string{member.Node.Login, member.Node.Email})
+			members = append(members, map[string]string{"Login": member.Node.Login, "Email": member.Node.Email})
 		}
 
 		if !query.Organization.Team.Members.PageInfo.HasNextPage {
@@ -111,8 +136,8 @@ func GetTeamMemberships(team string) [][]string {
 	return members
 }
 
-func GetTeamRepositories(team string) [][]string {
-	client := newGHClient(viper.GetString("source_token"))
+func GetTeamRepositories(team string) []map[string]string {
+	client := newGHGraphqlClient(viper.GetString("source_token"))
 
 	var query struct {
 		Organization struct {
@@ -140,7 +165,7 @@ func GetTeamRepositories(team string) [][]string {
 		"after": (*githubv4.String)(nil),
 	}
 
-	var repositories [][]string
+	var repositories = []map[string]string{}
 	for {
 		err := client.Query(context.Background(), &query, variables)
 		if err != nil {
@@ -148,7 +173,7 @@ func GetTeamRepositories(team string) [][]string {
 		}
 
 		for _, repo := range query.Organization.Team.Repositories.Edges {
-			repositories = append(repositories, []string{repo.Node.Name, repo.Permission})
+			repositories = append(repositories, map[string]string{"Name": repo.Node.Name, "Permission": repo.Permission})
 		}
 
 		if !query.Organization.Team.Repositories.PageInfo.HasNextPage {
@@ -160,3 +185,29 @@ func GetTeamRepositories(team string) [][]string {
 
 	return repositories
 }
+
+func CreateTeam(name string, description string, privacy string, parentTeamId string) {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+
+	r := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
+	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), r)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "Name must be unique for this org") {
+			fmt.Println("Error creating team, team already exists: ", name)
+		} else {
+			fmt.Println(err.Error())
+			os.Exit(1)
+		}
+	}
+}
+
+// func AddTeamRepository(teamId int64, repo string, permission string) {
+// 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+
+// 	_, err := client.Teams.AddTeamRepo(context.Background(), teamId, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
+
+// 	if err != nil {
+// 		panic(err)
+// 	}
+// }

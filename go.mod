@@ -3,6 +3,8 @@ module github.com/mona-actions/gh-migrate-teams
 go 1.19
 
 require (
+	github.com/gofri/go-github-ratelimit v1.0.3
+	github.com/google/go-github v17.0.0+incompatible
 	github.com/pterm/pterm v0.12.63
 	github.com/shurcooL/githubv4 v0.0.0-20230704064427-599ae7bbf278
 	github.com/spf13/cobra v1.7.0
@@ -17,6 +19,7 @@ require (
 	github.com/containerd/console v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
+	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gookit/color v1.5.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
