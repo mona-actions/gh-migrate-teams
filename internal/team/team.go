@@ -1,6 +1,8 @@
 package team
 
 import (
+	"time"
+
 	"github.com/mona-actions/gh-migrate-teams/internal/api"
 )
 
@@ -8,6 +10,7 @@ type Teams []Team
 
 type Team struct {
 	Id           string
+	DatabaseId   int64
 	Name         string
 	Slug         string
 	Description  string
@@ -72,9 +75,17 @@ func getTeamRepositories(team string) []Repository {
 
 	repositories := make([]Repository, 0)
 	for _, repository := range data {
+		// Fixing permission values
+		permission := "pull"
+		if repository["Permission"] == "WRITE" {
+			permission = "push"
+		} else if repository["Permission"] == "ADMIN" {
+			permission = "admin"
+		}
+
 		repositories = append(repositories, Repository{
 			Name:       repository["Name"],
-			Permission: repository["Permission"],
+			Permission: permission,
 		})
 	}
 
@@ -83,6 +94,10 @@ func getTeamRepositories(team string) []Repository {
 
 func (t Team) CreateTeam() {
 	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamId)
+
+	// Adding a wait to account for race condition
+	time.Sleep(3 * time.Second)
+
 	for _, repository := range t.Repositories {
 		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
 	}

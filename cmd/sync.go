@@ -14,8 +14,8 @@ import (
 // syncCmd represents the export command
 var syncCmd = &cobra.Command{
 	Use:   "sync",
-	Short: "Recreates teams, membership, repos, and team repo roles from a source organization to a target organization",
-	Long:  "Recreates teams, membership, repos, and team repo roles from a source organization to a target organization",
+	Short: "Recreates teams, membership, and team repo roles from a source organization to a target organization",
+	Long:  "Recreates teams, membership, and team repo roles from a source organization to a target organization",
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get parameters
 		sourceOrganization := cmd.Flag("source-organization").Value.String()

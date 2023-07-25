@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v53/github"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -73,7 +73,13 @@ func GetSourceOrganizationTeams() []map[string]string {
 		}
 
 		for _, team := range query.Organization.Teams.Edges {
-			teams = append(teams, map[string]string{"Id": team.Node.Id, "Name": team.Node.Name, "Slug": team.Node.Slug, "Description": team.Node.Description, "Privacy": team.Node.Privacy, "ParentTeamId": team.Node.ParentTeam.Id})
+			teams = append(teams, map[string]string{
+				"Id":           team.Node.Id,
+				"Name":         team.Node.Name,
+				"Slug":         team.Node.Slug,
+				"Description":  team.Node.Description,
+				"Privacy":      team.Node.Privacy,
+				"ParentTeamId": team.Node.ParentTeam.Id})
 		}
 
 		if !query.Organization.Teams.PageInfo.HasNextPage {
@@ -205,10 +211,17 @@ func CreateTeam(name string, description string, privacy string, parentTeamId st
 func AddTeamRepository(slug string, repo string, permission string) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
-	r := github.TeamAddTeamRepoOptions{Permission: permission}
-	_, err := client.Teams.AddTeamRepo(context.Background(), teamId, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
+	fmt.Println("Adding repository to team: ", slug, repo, permission)
+
+	_, err := client.Teams.AddTeamRepoBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
 
 	if err != nil {
-		panic(err)
+		if strings.Contains(err.Error(), "422 Validation Failed") {
+			fmt.Println("Error adding repository to team: ", slug, repo, permission)
+		} else if strings.Contains(err.Error(), "404 Not Found") {
+			fmt.Println("Error adding repository to team, repository not found: ", slug, repo, permission)
+		} else {
+			panic(err)
+		}
 	}
 }
