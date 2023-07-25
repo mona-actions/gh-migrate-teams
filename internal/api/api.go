@@ -16,8 +16,13 @@ import (
 func newGHGraphqlClient(token string) *githubv4.Client {
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(httpClient.Transport)
 
-	return githubv4.NewClient(httpClient)
+	if err != nil {
+		panic(err)
+	}
+
+	return githubv4.NewClient(rateLimiter)
 }
 
 func newGHRestClient(token string) *github.Client {
