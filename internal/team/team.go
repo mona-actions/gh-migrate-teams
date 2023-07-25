@@ -1,0 +1,126 @@
+package team
+
+import (
+	"time"
+
+	"github.com/mona-actions/gh-migrate-teams/internal/api"
+)
+
+type Teams []Team
+
+type Team struct {
+	Id           string
+	DatabaseId   int64
+	Name         string
+	Slug         string
+	Description  string
+	Privacy      string
+	ParentTeamId string
+	Members      []Member
+	Repositories []Repository
+}
+
+type Member struct {
+	Login string
+	Email string
+}
+
+type Repository struct {
+	Name       string
+	Permission string
+}
+
+func GetSourceOrganizationTeams() Teams {
+	data := api.GetSourceOrganizationTeams()
+
+	teams := make([]Team, 0)
+	for _, team := range data {
+		// Fixing privacy values
+		privacy := "SECRET"
+		if team["Privacy"] != "SECRET" {
+			privacy = "closed"
+		}
+
+		teams = append(teams, Team{
+			Id:           team["Id"],
+			Name:         team["Name"],
+			Slug:         team["Slug"],
+			Description:  team["Description"],
+			Privacy:      privacy,
+			ParentTeamId: team["ParentTeamId"],
+			Members:      getTeamMemberships(team["Slug"]),
+			Repositories: getTeamRepositories(team["Slug"]),
+		})
+	}
+
+	return teams
+}
+
+func getTeamMemberships(team string) []Member {
+	data := api.GetTeamMemberships(team)
+
+	members := make([]Member, 0)
+	for _, member := range data {
+		members = append(members, Member{
+			Login: member["Login"],
+			Email: member["Email"],
+		})
+	}
+
+	return members
+}
+
+func getTeamRepositories(team string) []Repository {
+	data := api.GetTeamRepositories(team)
+
+	repositories := make([]Repository, 0)
+	for _, repository := range data {
+		// Fixing permission values
+		permission := "pull"
+		if repository["Permission"] == "WRITE" {
+			permission = "push"
+		} else if repository["Permission"] == "ADMIN" {
+			permission = "admin"
+		}
+
+		repositories = append(repositories, Repository{
+			Name:       repository["Name"],
+			Permission: permission,
+		})
+	}
+
+	return repositories
+}
+
+func (t Team) CreateTeam() {
+	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamId)
+
+	// Adding a wait to account for race condition
+	time.Sleep(3 * time.Second)
+
+	for _, repository := range t.Repositories {
+		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
+	}
+}
+
+func (t Teams) ExportTeamMemberships() [][]string {
+	memberships := make([][]string, 0)
+	for _, team := range t {
+		for _, member := range team.Members {
+			memberships = append(memberships, []string{team.Name, member.Login, member.Email})
+		}
+	}
+
+	return memberships
+}
+
+func (t Teams) ExportTeamRepositories() [][]string {
+	repositories := make([][]string, 0)
+	for _, team := range t {
+		for _, repository := range team.Repositories {
+			repositories = append(repositories, []string{team.Name, repository.Name, repository.Permission})
+		}
+	}
+
+	return repositories
+}
