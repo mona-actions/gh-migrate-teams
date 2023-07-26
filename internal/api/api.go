@@ -16,8 +16,13 @@ import (
 func newGHGraphqlClient(token string) *githubv4.Client {
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(httpClient.Transport)
 
-	return githubv4.NewClient(httpClient)
+	if err != nil {
+		panic(err)
+	}
+
+	return githubv4.NewClient(rateLimiter)
 }
 
 func newGHRestClient(token string) *github.Client {
@@ -190,6 +195,101 @@ func GetTeamRepositories(team string) []map[string]string {
 	}
 
 	return repositories
+}
+
+func GetSourceOrganizationRepositories() []map[string]string {
+	client := newGHGraphqlClient(viper.GetString("source_token"))
+
+	var query struct {
+		Organization struct {
+			Repositories struct {
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+				Edges []struct {
+					Node struct {
+						Name string
+					}
+				}
+			} `graphql:"repositories(first: $first, after: $after)"`
+		} `graphql:"organization(login: $login)"`
+	}
+
+	variables := map[string]interface{}{
+		"login": githubv4.String(viper.Get("SOURCE_ORGANIZATION").(string)),
+		"first": githubv4.Int(100),
+		"after": (*githubv4.String)(nil),
+	}
+
+	var repositories = []map[string]string{}
+	for {
+		err := client.Query(context.Background(), &query, variables)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, repo := range query.Organization.Repositories.Edges {
+			repositories = append(repositories, map[string]string{"Name": repo.Node.Name})
+		}
+
+		if !query.Organization.Repositories.PageInfo.HasNextPage {
+			break
+		}
+
+		variables["after"] = githubv4.NewString(query.Organization.Repositories.PageInfo.EndCursor)
+	}
+
+	return repositories
+}
+
+func GetRepositoryCollaborators(repository string) []map[string]string {
+	client := newGHGraphqlClient(viper.GetString("source_token"))
+
+	var query struct {
+		Repository struct {
+			Collaborators struct {
+				PageInfo struct {
+					EndCursor   githubv4.String
+					HasNextPage bool
+				}
+				Edges []struct {
+					Permission string
+					Node       struct {
+						Login string
+						Email string
+					}
+				}
+			} `graphql:"collaborators(first: $first, after: $after)"`
+		} `graphql:"repository(name: $name, owner: $owner)"`
+	}
+
+	variables := map[string]interface{}{
+		"owner": githubv4.String(viper.Get("SOURCE_ORGANIZATION").(string)),
+		"name":  githubv4.String(repository),
+		"first": githubv4.Int(100),
+		"after": (*githubv4.String)(nil),
+	}
+
+	var collaborators = []map[string]string{}
+	for {
+		err := client.Query(context.Background(), &query, variables)
+		if err != nil {
+			panic(err)
+		}
+
+		for _, collaborator := range query.Repository.Collaborators.Edges {
+			collaborators = append(collaborators, map[string]string{"Login": collaborator.Node.Login, "Email": collaborator.Node.Email, "Permission": collaborator.Permission})
+		}
+
+		if !query.Repository.Collaborators.PageInfo.HasNextPage {
+			break
+		}
+
+		variables["after"] = githubv4.NewString(query.Repository.Collaborators.PageInfo.EndCursor)
+	}
+
+	return collaborators
 }
 
 func CreateTeam(name string, description string, privacy string, parentTeamId string) {

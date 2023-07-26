@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"os"
 
+	"github.com/mona-actions/gh-migrate-teams/internal/repository"
 	"github.com/mona-actions/gh-migrate-teams/internal/team"
 	"github.com/pterm/pterm"
 	"github.com/spf13/viper"
@@ -24,6 +25,16 @@ func CreateCSVs() {
 	createCSVRepositoriesSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Creating team repository csv...")
 	createCSV(teams.ExportTeamRepositories(), viper.GetString("OUTPUT_FILE")+"-team-repositories.csv")
 	createCSVRepositoriesSpinnerSuccess.Success()
+
+	// Get all repositories from source organization
+	repositoriesSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Fetching repositories from organization...")
+	repositories := repository.GetSourceOrganizationRepositories()
+	repositoriesSpinnerSuccess.Success()
+
+	// Create repository collaborator csv
+	createCSVCollaboratorsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Creating repository collaborator csv...")
+	createCSV(repositories.ExportRepositoryCollaborators(), viper.GetString("OUTPUT_FILE")+"-repository-collaborators.csv")
+	createCSVCollaboratorsSpinnerSuccess.Success()
 }
 
 func createCSV(data [][]string, filename string) {

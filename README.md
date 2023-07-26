@@ -10,7 +10,7 @@ gh extension install mona-actions/gh-migrate-teams
 
 ## Usage: Export
 
-Export team membership and repository access to a CSV file.
+Export team membership, team repository access, and repository collaborator access to CSV files.
 
 ```bash
 Usage:
