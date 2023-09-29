@@ -21,6 +21,9 @@ var exportCmd = &cobra.Command{
 		organization := cmd.Flag("organization").Value.String()
 		token := cmd.Flag("token").Value.String()
 		filePrefix := cmd.Flag("file-prefix").Value.String()
+		if filePrefix == "" {
+			filePrefix = organization
+		}
 
 		// Set ENV variables
 		os.Setenv("GHMT_SOURCE_ORGANIZATION", organization)
@@ -48,6 +51,5 @@ func init() {
 	exportCmd.MarkFlagRequired("token")
 
 	exportCmd.Flags().StringP("file-prefix", "f", "", "Output filenames prefix")
-	exportCmd.MarkFlagRequired("output")
 
 }
