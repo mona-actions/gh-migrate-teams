@@ -75,18 +75,20 @@ func getTeamRepositories(team string) []Repository {
 
 	repositories := make([]Repository, 0)
 	for _, repository := range data {
-		// Fixing permission values
-		permission := "pull"
-		if repository["Permission"] == "WRITE" {
-			permission = "push"
-		} else if repository["Permission"] == "ADMIN" {
-			permission = "admin"
-		}
+		if repository["Name"] != "" {
+			// Fixing permission values
+			permission := "pull"
+			if repository["Permission"] == "WRITE" {
+				permission = "push"
+			} else if repository["Permission"] == "ADMIN" {
+				permission = "admin"
+			}
 
-		repositories = append(repositories, Repository{
-			Name:       repository["Name"],
-			Permission: permission,
-		})
+			repositories = append(repositories, Repository{
+				Name:       repository["Name"],
+				Permission: permission,
+			})
+		}
 	}
 
 	return repositories
