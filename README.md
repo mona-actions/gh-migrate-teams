@@ -25,7 +25,7 @@ Flags:
 
 ## Usage: Sync
 
-Recreates teams, membership, and team repo roles from a source organization to a target organization.
+Recreates teams, membership, and team repo roles from a source organization to a target organization
 
 ```bash
 Usage:
@@ -33,10 +33,22 @@ Usage:
 
 Flags:
   -h, --help                         help for sync
+  -m, --mapping-file string          Mapping file path to use for mapping teams members handles (default "mapping-file.csv")
   -s, --source-organization string   Source Organization to sync teams from
-  -a, --source-token string          Source Organization GitHub token
+  -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
   -t, --target-organization string   Target Organization to sync teams from
-  -b, --target-token string          Target Organization GitHub token
+  -b, --target-token string          Target Organization GitHub token. Scopes: admin:org
+```
+
+### Mapping File Example
+
+A mapping file can be provided to map member handles in case they are different between source and target.
+
+Example:
+
+```csv
+source,target
+flastname,firstname.lastname
 ```
 
 ## License
