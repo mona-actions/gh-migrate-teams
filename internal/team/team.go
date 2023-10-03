@@ -103,6 +103,10 @@ func (t Team) CreateTeam() {
 	for _, repository := range t.Repositories {
 		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
 	}
+
+	for _, member := range t.Members {
+		api.AddTeamMember(t.Slug, member.Login)
+	}
 }
 
 func (t Teams) ExportTeamMemberships() [][]string {
