@@ -33,7 +33,7 @@ Usage:
 
 Flags:
   -h, --help                         help for sync
-  -m, --mapping-file string          Mapping file path to use for mapping teams members handles (default "mapping-file.csv")
+  -m, --mapping-file string          Mapping file path to use for mapping teams members handles
   -s, --source-organization string   Source Organization to sync teams from
   -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
   -t, --target-organization string   Target Organization to sync teams from

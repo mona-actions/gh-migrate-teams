@@ -59,6 +59,6 @@ func init() {
 	syncCmd.Flags().StringP("target-token", "b", "", "Target Organization GitHub token. Scopes: admin:org")
 	syncCmd.MarkFlagRequired("target-token")
 
-	syncCmd.Flags().StringP("mapping-file", "m", "mapping-file.csv", "Mapping file path to use for mapping teams members handles")
+	syncCmd.Flags().StringP("mapping-file", "m", "", "Mapping file path to use for mapping teams members handles")
 
 }

@@ -19,7 +19,9 @@ func SyncTeams() {
 	createTeamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Creating teams in target organization...")
 	for _, team := range teams {
 		// Map members
-		team = mapMembers(team)
+		if os.Getenv("GHMT_MAPPING_FILE") != "" {
+			team = mapMembers(team)
+		}
 		team.CreateTeam()
 	}
 	createTeamsSpinnerSuccess.Success()
