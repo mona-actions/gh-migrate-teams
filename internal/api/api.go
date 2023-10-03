@@ -325,3 +325,13 @@ func AddTeamRepository(slug string, repo string, permission string) {
 		}
 	}
 }
+
+func AddTeamMember(slug string, member string) {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+
+	fmt.Println("Adding member to team: ", slug, member)
+	_, _, err := client.Teams.AddTeamMembershipBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: "member"})
+	if err != nil {
+		fmt.Println("Error adding member to team: ", slug, member)
+	}
+}
