@@ -21,6 +21,7 @@ var exportCmd = &cobra.Command{
 		organization := cmd.Flag("organization").Value.String()
 		token := cmd.Flag("token").Value.String()
 		filePrefix := cmd.Flag("file-prefix").Value.String()
+		ghHostname := cmd.Flag("hostname").Value.String()
 		if filePrefix == "" {
 			filePrefix = organization
 		}
@@ -29,11 +30,13 @@ var exportCmd = &cobra.Command{
 		os.Setenv("GHMT_SOURCE_ORGANIZATION", organization)
 		os.Setenv("GHMT_SOURCE_TOKEN", token)
 		os.Setenv("GHMT_OUTPUT_FILE", filePrefix)
+		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 
 		// Bind ENV variables in Viper
 		viper.BindEnv("SOURCE_ORGANIZATION")
 		viper.BindEnv("SOURCE_TOKEN")
 		viper.BindEnv("OUTPUT_FILE")
+		viper.BindEnv("SOURCE_HOSTNAME")
 
 		// Call exportCSV
 		export.CreateCSVs()
@@ -51,5 +54,7 @@ func init() {
 	exportCmd.MarkFlagRequired("token")
 
 	exportCmd.Flags().StringP("file-prefix", "f", "", "Output filenames prefix")
+
+	exportCmd.Flags().StringP("hostname", "u", "", "GitHub Enterprise hostname url (optional) Ex. https://github.example.com")
 
 }

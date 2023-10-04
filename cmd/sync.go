@@ -23,6 +23,7 @@ var syncCmd = &cobra.Command{
 		sourceToken := cmd.Flag("source-token").Value.String()
 		targetToken := cmd.Flag("target-token").Value.String()
 		mappingFile := cmd.Flag("mapping-file").Value.String()
+		ghHostname := cmd.Flag("source-hostname").Value.String()
 
 		// Set ENV variables
 		os.Setenv("GHMT_SOURCE_ORGANIZATION", sourceOrganization)
@@ -30,6 +31,7 @@ var syncCmd = &cobra.Command{
 		os.Setenv("GHMT_SOURCE_TOKEN", sourceToken)
 		os.Setenv("GHMT_TARGET_TOKEN", targetToken)
 		os.Setenv("GHMT_MAPPING_FILE", mappingFile)
+		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 
 		// Bind ENV variables in Viper
 		viper.BindEnv("SOURCE_ORGANIZATION")
@@ -37,7 +39,7 @@ var syncCmd = &cobra.Command{
 		viper.BindEnv("SOURCE_TOKEN")
 		viper.BindEnv("TARGET_TOKEN")
 		viper.BindEnv("MAPPING_FILE")
-
+		viper.BindEnv("SOURCE_HOSTNAME")
 		// Call syncTeams
 		sync.SyncTeams()
 	},
@@ -60,5 +62,7 @@ func init() {
 	syncCmd.MarkFlagRequired("target-token")
 
 	syncCmd.Flags().StringP("mapping-file", "m", "", "Mapping file path to use for mapping teams members handles")
+
+	syncCmd.Flags().StringP("source-hostname", "u", "", "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 
 }

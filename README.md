@@ -19,6 +19,7 @@ Usage:
 Flags:
   -f, --file-prefix string    Output filenames prefix
   -h, --help                  help for export
+  -u, --hostname string       GitHub Enterprise hostname url (optional) Ex. https://github.example.com
   -o, --organization string   Organization to export
   -t, --token string          GitHub token
 ```
@@ -34,6 +35,7 @@ Usage:
 Flags:
   -h, --help                         help for sync
   -m, --mapping-file string          Mapping file path to use for mapping teams members handles
+  -u, --source-hostname string       GitHub Enterprise source hostname url (optional) Ex. https://github.example.com
   -s, --source-organization string   Source Organization to sync teams from
   -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
   -t, --target-organization string   Target Organization to sync teams from
