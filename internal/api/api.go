@@ -14,6 +14,8 @@ import (
 )
 
 func newGHGraphqlClient(token string) *githubv4.Client {
+	hostname := viper.GetString("SOURCE_HOSTNAME")
+	var client *githubv4.Client
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
 	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(httpClient.Transport)
@@ -21,8 +23,16 @@ func newGHGraphqlClient(token string) *githubv4.Client {
 	if err != nil {
 		panic(err)
 	}
+	client = githubv4.NewClient(rateLimiter)
 
-	return githubv4.NewClient(rateLimiter)
+	// Trim any trailing slashes from the hostname
+	hostname = strings.TrimSuffix(hostname, "/")
+
+	// If hostname is received, create a new client with the hostname
+	if hostname != "" {
+		client = githubv4.NewEnterpriseClient(hostname+"/api/graphql", rateLimiter)
+	}
+	return client
 }
 
 func newGHRestClient(token string) *github.Client {
