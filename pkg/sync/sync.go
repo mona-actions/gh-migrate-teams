@@ -23,8 +23,8 @@ func SyncTeams() {
 			team = mapMembers(team)
 		}
 		team.CreateTeam()
-		createTeamsSpinnerSuccess.Success()
 	}
+	createTeamsSpinnerSuccess.Success()
 }
 
 func mapMembers(team team.Team) team.Team {
