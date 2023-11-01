@@ -24,6 +24,7 @@ var syncCmd = &cobra.Command{
 		targetToken := cmd.Flag("target-token").Value.String()
 		mappingFile := cmd.Flag("mapping-file").Value.String()
 		ghHostname := cmd.Flag("source-hostname").Value.String()
+		userSync := cmd.Flag("user-sync").Value.String()
 
 		// Set ENV variables
 		os.Setenv("GHMT_SOURCE_ORGANIZATION", sourceOrganization)
@@ -32,6 +33,7 @@ var syncCmd = &cobra.Command{
 		os.Setenv("GHMT_TARGET_TOKEN", targetToken)
 		os.Setenv("GHMT_MAPPING_FILE", mappingFile)
 		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
+		os.Setenv("GHMT_USER_SYNC", userSync)
 
 		// Bind ENV variables in Viper
 		viper.BindEnv("SOURCE_ORGANIZATION")
@@ -40,6 +42,7 @@ var syncCmd = &cobra.Command{
 		viper.BindEnv("TARGET_TOKEN")
 		viper.BindEnv("MAPPING_FILE")
 		viper.BindEnv("SOURCE_HOSTNAME")
+		viper.BindEnv("USER_SYNC")
 		// Call syncTeams
 		sync.SyncTeams()
 	},
@@ -64,5 +67,7 @@ func init() {
 	syncCmd.Flags().StringP("mapping-file", "m", "", "Mapping file path to use for mapping teams members handles")
 
 	syncCmd.Flags().StringP("source-hostname", "u", "", "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
+
+	syncCmd.Flags().StringP("user-sync", "u", "all", "User sync mode. One of: all, disable (default \"none\")")
 
 }
