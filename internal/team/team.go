@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/api"
+	"github.com/spf13/viper"
 )
 
 type Teams []Team
@@ -104,8 +105,13 @@ func (t Team) CreateTeam() {
 		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
 	}
 
-	for _, member := range t.Members {
-		api.AddTeamMember(t.Slug, member.Login)
+	// Check to see if user sync has been disabled
+	userSync := viper.GetString("USER_SYNC")
+
+	if userSync != "disable" {
+		for _, member := range t.Members {
+			api.AddTeamMember(t.Slug, member.Login)
+		}
 	}
 }
 
