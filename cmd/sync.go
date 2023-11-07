@@ -68,6 +68,6 @@ func init() {
 
 	syncCmd.Flags().StringP("source-hostname", "u", "", "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 
-	syncCmd.Flags().StringP("user-sync", "u", "all", "User sync mode. One of: all, disable (default \"none\")")
+	syncCmd.Flags().StringP("user-sync", "z", "all", "User sync mode. One of: all, disable (default \"none\")")
 
 }

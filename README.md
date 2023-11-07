@@ -40,7 +40,7 @@ Flags:
   -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
   -t, --target-organization string   Target Organization to sync teams from
   -b, --target-token string          Target Organization GitHub token. Scopes: admin:org
-  -u, --user-sync string             User sync mode. One of: all, disable (default "none")
+  -z, --user-sync string             User sync mode. One of: all, disable (default "none")
 ```
 
 ### Mapping File Example
