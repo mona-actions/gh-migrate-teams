@@ -10,15 +10,16 @@ import (
 type Teams []Team
 
 type Team struct {
-	Id           string
-	DatabaseId   int64
-	Name         string
-	Slug         string
-	Description  string
-	Privacy      string
-	ParentTeamId string
-	Members      []Member
-	Repositories []Repository
+	Id             string
+	DatabaseId     int64
+	Name           string
+	Slug           string
+	Description    string
+	Privacy        string
+	ParentTeamId   string
+	Members        []Member
+	Repositories   []Repository
+	ParentTeamName string
 }
 
 type Member struct {
@@ -43,14 +44,15 @@ func GetSourceOrganizationTeams() Teams {
 		}
 
 		teams = append(teams, Team{
-			Id:           team["Id"],
-			Name:         team["Name"],
-			Slug:         team["Slug"],
-			Description:  team["Description"],
-			Privacy:      privacy,
-			ParentTeamId: team["ParentTeamId"],
-			Members:      getTeamMemberships(team["Slug"]),
-			Repositories: getTeamRepositories(team["Slug"]),
+			Id:             team["Id"],
+			Name:           team["Name"],
+			Slug:           team["Slug"],
+			Description:    team["Description"],
+			Privacy:        privacy,
+			ParentTeamId:   team["ParentTeamId"],
+			ParentTeamName: team["ParentTeamName"],
+			Members:        getTeamMemberships(team["Slug"]),
+			Repositories:   getTeamRepositories(team["Slug"]),
 		})
 	}
 
@@ -96,7 +98,7 @@ func getTeamRepositories(team string) []Repository {
 }
 
 func (t Team) CreateTeam() {
-	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamId)
+	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamName)
 
 	// Adding a wait to account for race condition
 	time.Sleep(3 * time.Second)

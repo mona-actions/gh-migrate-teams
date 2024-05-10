@@ -66,7 +66,8 @@ func GetSourceOrganizationTeams() []map[string]string {
 						Slug        string
 						Privacy     string
 						ParentTeam  struct {
-							Id string
+							Id   string
+							Slug string
 						}
 					}
 				}
@@ -89,12 +90,14 @@ func GetSourceOrganizationTeams() []map[string]string {
 
 		for _, team := range query.Organization.Teams.Edges {
 			teams = append(teams, map[string]string{
-				"Id":           team.Node.Id,
-				"Name":         team.Node.Name,
-				"Slug":         team.Node.Slug,
-				"Description":  team.Node.Description,
-				"Privacy":      team.Node.Privacy,
-				"ParentTeamId": team.Node.ParentTeam.Id})
+				"Id":             team.Node.Id,
+				"Name":           team.Node.Name,
+				"Slug":           team.Node.Slug,
+				"Description":    team.Node.Description,
+				"Privacy":        team.Node.Privacy,
+				"ParentTeamId":   team.Node.ParentTeam.Id,
+				"ParentTeamName": team.Node.ParentTeam.Slug,
+			})
 		}
 
 		if !query.Organization.Teams.PageInfo.HasNextPage {
@@ -302,10 +305,18 @@ func GetRepositoryCollaborators(repository string) []map[string]string {
 	return collaborators
 }
 
-func CreateTeam(name string, description string, privacy string, parentTeamId string) {
+func CreateTeam(name string, description string, privacy string, ParentTeamName string) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
 	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
+	if ParentTeamName != "" {
+		parentTeamID, err := GetTeamId(ParentTeamName)
+		if err != nil {
+			fmt.Println(err)
+		}
+		t.ParentTeamID = &parentTeamID
+	}
+
 	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), t)
 
 	if err != nil {
@@ -344,4 +355,14 @@ func AddTeamMember(slug string, member string) {
 	if err != nil {
 		fmt.Println("Error adding member to team: ", slug, member)
 	}
+}
+
+func GetTeamId(TeamName string) (int64, error) {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	team, _, err := client.Teams.GetTeamBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), TeamName)
+	if err != nil {
+		fmt.Println("Error getting team ID: ", TeamName)
+		return 0, err
+	}
+	return *team.ID, nil
 }
