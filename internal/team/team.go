@@ -98,6 +98,7 @@ func getTeamRepositories(team string) []Repository {
 }
 
 func (t Team) CreateTeam() {
+	// We Send ParentTeamName as that is easiest to get the ParentTeamId
 	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamName)
 
 	// Adding a wait to account for race condition

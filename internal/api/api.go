@@ -305,12 +305,12 @@ func GetRepositoryCollaborators(repository string) []map[string]string {
 	return collaborators
 }
 
-func CreateTeam(name string, description string, privacy string, ParentTeamName string) {
+func CreateTeam(name string, description string, privacy string, parentTeamName string) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
 	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
-	if ParentTeamName != "" {
-		parentTeamID, err := GetTeamId(ParentTeamName)
+	if parentTeamName != "" {
+		parentTeamID, err := GetTeamId(parentTeamName)
 		if err != nil {
 			fmt.Println(err)
 		}
