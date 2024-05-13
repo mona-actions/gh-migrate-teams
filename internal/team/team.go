@@ -25,6 +25,7 @@ type Team struct {
 type Member struct {
 	Login string
 	Email string
+	Role  string
 }
 
 type Repository struct {
@@ -67,6 +68,7 @@ func getTeamMemberships(team string) []Member {
 		members = append(members, Member{
 			Login: member["Login"],
 			Email: member["Email"],
+			Role:  member["Role"],
 		})
 	}
 
@@ -113,7 +115,7 @@ func (t Team) CreateTeam() {
 
 	if userSync != "disable" {
 		for _, member := range t.Members {
-			api.AddTeamMember(t.Slug, member.Login)
+			api.AddTeamMember(t.Slug, member.Login, member.Role)
 		}
 	}
 }

@@ -125,6 +125,7 @@ func GetTeamMemberships(team string) []map[string]string {
 							Login string
 							Email string
 						}
+						Role string
 					}
 				} `graphql:"members(first: $first, after: $after)"`
 			} `graphql:"team(slug: $slug)"`
@@ -146,7 +147,7 @@ func GetTeamMemberships(team string) []map[string]string {
 		}
 
 		for _, member := range query.Organization.Team.Members.Edges {
-			members = append(members, map[string]string{"Login": member.Node.Login, "Email": member.Node.Email})
+			members = append(members, map[string]string{"Login": member.Node.Login, "Email": member.Node.Email, "Role": member.Role})
 		}
 
 		if !query.Organization.Team.Members.PageInfo.HasNextPage {
@@ -312,8 +313,9 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 		parentTeamID, err := GetTeamId(parentTeamName)
 		if err != nil {
 			fmt.Println(err)
+		} else {
+			t.ParentTeamID = &parentTeamID
 		}
-		t.ParentTeamID = &parentTeamID
 	}
 
 	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), t)
@@ -345,13 +347,14 @@ func AddTeamRepository(slug string, repo string, permission string) {
 	}
 }
 
-func AddTeamMember(slug string, member string) {
+func AddTeamMember(slug string, member string, role string) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
-	fmt.Println("Adding member to team: ", slug, member)
-	_, _, err := client.Teams.AddTeamMembershipBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: "member"})
+	role = strings.ToLower(role) // lowercase to match github api
+	fmt.Println("Adding member to team: ", slug, member, role)
+	_, _, err := client.Teams.AddTeamMembershipBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: role})
 	if err != nil {
-		fmt.Println("Error adding member to team: ", slug, member)
+		fmt.Println("Error adding member to team: ", slug, member, err)
 	}
 }
 
@@ -359,7 +362,7 @@ func GetTeamId(TeamName string) (int64, error) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 	team, _, err := client.Teams.GetTeamBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), TeamName)
 	if err != nil {
-		fmt.Println("Error getting team ID: ", TeamName)
+		fmt.Println("Error getting parent team ID: ", TeamName)
 		return 0, err
 	}
 	return *team.ID, nil
