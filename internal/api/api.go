@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
@@ -323,8 +322,7 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 		if strings.Contains(err.Error(), "Name must be unique for this org") {
 			fmt.Println("Error creating team, team already exists: ", name)
 		} else {
-			fmt.Println(err.Error())
-			os.Exit(1)
+			fmt.Println("Unable to create team:", name, err.Error())
 		}
 	}
 }
@@ -342,7 +340,7 @@ func AddTeamRepository(slug string, repo string, permission string) {
 		} else if strings.Contains(err.Error(), "404 Not Found") {
 			fmt.Println("Error adding repository to team, repository not found: ", slug, repo, permission)
 		} else {
-			panic(err)
+			fmt.Println("adding repository to team: ", slug, repo, permission, "Unknown error", err, err.Error())
 		}
 	}
 }
