@@ -74,6 +74,6 @@ func init() {
 
 	syncCmd.Flags().StringP("user-sync", "z", "all", "User sync mode. One of: all, disable (default \"none\")")
 
-	syncCmd.Flags().BoolP("skip-teams", "k", false, "Skip teams that are already exist to save on API requests (default \"false\")")
+	syncCmd.Flags().BoolP("skip-teams", "k", false, "Skips adding members and repos to teams that already exist to save on API requests (default \"false\")")
 
 }

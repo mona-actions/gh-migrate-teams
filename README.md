@@ -35,7 +35,7 @@ Usage:
 Flags:
   -h, --help                         help for sync
   -m, --mapping-file string          Mapping file path to use for mapping teams members handles
-  -k, --skip-teams                   Skip addin members and repos to teams that are already exist to save on API requests (default "false")
+   -k, --skip-teams                   Skips adding members and repos to teams that already exist to save on API requests (default "false")
   -u, --source-hostname string       GitHub Enterprise source hostname url (optional) Ex. https://github.example.com
   -s, --source-organization string   Source Organization to sync teams from
   -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
