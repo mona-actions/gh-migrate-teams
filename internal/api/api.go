@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
-	"github.com/google/go-github/v53/github"
+	"github.com/google/go-github/v62/github"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
@@ -305,7 +305,7 @@ func GetRepositoryCollaborators(repository string) []map[string]string {
 	return collaborators
 }
 
-func CreateTeam(name string, description string, privacy string, parentTeamName string) {
+func CreateTeam(name string, description string, privacy string, parentTeamName string) error {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
 	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
@@ -318,15 +318,19 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 		}
 	}
 
-	_, _, err := client.Teams.CreateTeam(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), t)
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+	_, _, err := client.Teams.CreateTeam(ctx, viper.Get("TARGET_ORGANIZATION").(string), t)
 
 	if err != nil {
 		if strings.Contains(err.Error(), "Name must be unique for this org") {
 			fmt.Println("Error creating team, team already exists: ", name)
+			return err
 		} else {
 			fmt.Println("Unable to create team:", name, err.Error())
+			return err
 		}
 	}
+	return nil
 }
 
 func AddTeamRepository(slug string, repo string, permission string) {
@@ -334,7 +338,8 @@ func AddTeamRepository(slug string, repo string, permission string) {
 
 	fmt.Println("Adding repository to team: ", slug, repo, permission)
 
-	_, err := client.Teams.AddTeamRepoBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+	_, err := client.Teams.AddTeamRepoBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), slug, viper.Get("TARGET_ORGANIZATION").(string), repo, &github.TeamAddTeamRepoOptions{Permission: permission})
 
 	if err != nil {
 		if strings.Contains(err.Error(), "422 Validation Failed") {
@@ -352,7 +357,9 @@ func AddTeamMember(slug string, member string, role string) {
 
 	role = strings.ToLower(role) // lowercase to match github api
 	fmt.Println("Adding member to team: ", slug, member, role)
-	_, _, err := client.Teams.AddTeamMembershipBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: role})
+
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+	_, _, err := client.Teams.AddTeamMembershipBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: role})
 	if err != nil {
 		fmt.Println("Error adding member to team: ", slug, member, err)
 	}
@@ -360,7 +367,9 @@ func AddTeamMember(slug string, member string, role string) {
 
 func GetTeamId(TeamName string) (int64, error) {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
-	team, _, err := client.Teams.GetTeamBySlug(context.Background(), viper.Get("TARGET_ORGANIZATION").(string), TeamName)
+
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+	team, _, err := client.Teams.GetTeamBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), TeamName)
 	if err != nil {
 		fmt.Println("Error getting parent team ID: ", TeamName)
 		return 0, err
