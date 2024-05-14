@@ -305,7 +305,7 @@ func GetRepositoryCollaborators(repository string) []map[string]string {
 	return collaborators
 }
 
-func CreateTeam(name string, description string, privacy string, parentTeamName string) {
+func CreateTeam(name string, description string, privacy string, parentTeamName string) error {
 	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
 
 	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
@@ -324,10 +324,13 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 	if err != nil {
 		if strings.Contains(err.Error(), "Name must be unique for this org") {
 			fmt.Println("Error creating team, team already exists: ", name)
+			return err
 		} else {
 			fmt.Println("Unable to create team:", name, err.Error())
+			return err
 		}
 	}
+	return nil
 }
 
 func AddTeamRepository(slug string, repo string, permission string) {

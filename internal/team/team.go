@@ -1,6 +1,7 @@
 package team
 
 import (
+	"strings"
 	"time"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/api"
@@ -101,21 +102,30 @@ func getTeamRepositories(team string) []Repository {
 
 func (t Team) CreateTeam() {
 	// We Send ParentTeamName as that is easiest to get the ParentTeamId
-	api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamName)
+	err := api.CreateTeam(t.Name, t.Description, t.Privacy, t.ParentTeamName)
+
+	skipTeams := viper.GetBool("SKIP_TEAMS")
 
 	// Adding a wait to account for race condition
 	time.Sleep(3 * time.Second)
 
-	for _, repository := range t.Repositories {
-		api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
-	}
+	//skip adding repositories and members if team already exists to save on API calls
+	if err != nil && skipTeams {
+		if strings.Contains(err.Error(), "Name must be unique for this org") {
+			return
+		}
+	} else {
+		for _, repository := range t.Repositories {
+			api.AddTeamRepository(t.Slug, repository.Name, repository.Permission)
+		}
 
-	// Check to see if user sync has been disabled
-	userSync := viper.GetString("USER_SYNC")
+		// Check to see if user sync has been disabled
+		userSync := viper.GetString("USER_SYNC")
 
-	if userSync != "disable" {
-		for _, member := range t.Members {
-			api.AddTeamMember(t.Slug, member.Login, member.Role)
+		if userSync != "disable" {
+			for _, member := range t.Members {
+				api.AddTeamMember(t.Slug, member.Login, member.Role)
+			}
 		}
 	}
 }
