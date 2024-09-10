@@ -59,14 +59,14 @@ func init() {
 
 	// Here you will define your flags and configuration settings.
 
-	byReposCmd.Flags().StringP("target-organization", "t", os.Getenv("TARGET_ORGANIZATION"), "Target Organization to sync teams from")
-	//byReposCmd.MarkFlagRequired("target-organization")
+	byReposCmd.Flags().StringP("target-organization", "t", "", "Target Organization to sync teams from")
+	byReposCmd.MarkFlagRequired("target-organization")
 
-	byReposCmd.Flags().StringP("source-token", "a", os.Getenv("SOURCE_ADMIN_TOKEN"), "Source Organization GitHub token. Scopes: read:org, read:user, user:email")
-	//byReposCmd.MarkFlagRequired("source-token")
+	byReposCmd.Flags().StringP("source-token", "a", "", "Source Organization GitHub token. Scopes: read:org, read:user, user:email")
+	byReposCmd.MarkFlagRequired("source-token")
 
-	byReposCmd.Flags().StringP("target-token", "b", os.Getenv("TARGET_ADMIN_TOKEN"), "Target Organization GitHub token. Scopes: admin:org")
-	//byReposCmd.MarkFlagRequired("target-token")
+	byReposCmd.Flags().StringP("target-token", "b", "", "Target Organization GitHub token. Scopes: admin:org")
+	byReposCmd.MarkFlagRequired("target-token")
 
 	byReposCmd.Flags().StringP("from-file", "f", "repositories.txt", "File path to use for repository list")
 	byReposCmd.MarkFlagRequired("from-file")

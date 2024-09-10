@@ -170,11 +170,9 @@ func GetRepositoryTeams(repository string) Teams {
 
 	teams := make(Teams, 0, len(data))
 	for _, team := range data {
-		log.Println("internal/getRepositoryTeams - team - ", team)
 		if team.Parent != nil {
 			parentTeamID = strconv.FormatInt(team.Parent.GetID(), 10)
 			parentTeamName = *team.Parent.Name
-			log.Println("internal/getRepositoryTeams - parent team id - ", parentTeamName)
 		}
 
 		team := Team{

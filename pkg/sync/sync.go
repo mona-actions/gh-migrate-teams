@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/repository"
 	"github.com/mona-actions/gh-migrate-teams/internal/team"
@@ -67,6 +68,10 @@ func getTargetHandle(filename string, source_handle string) (string, error) {
 	// Find target value for source value
 	for _, record := range records[1:] {
 		if record[0] == source_handle {
+			//if filename contains the string gei, return the third column
+			if strings.Contains(filename, "gei") {
+				return record[2], nil
+			}
 			return record[1], nil
 		}
 	}
