@@ -1,6 +1,13 @@
 package repository
 
-import "github.com/mona-actions/gh-migrate-teams/internal/api"
+import (
+	"bufio"
+	"net/url"
+	"os"
+	"strings"
+
+	"github.com/mona-actions/gh-migrate-teams/internal/api"
+)
 
 type repositories []Repository
 
@@ -59,4 +66,29 @@ func (r repositories) ExportRepositoryCollaborators() [][]string {
 	}
 
 	return collaborators
+}
+
+func ParseRepositoryFile(filename string) ([]string, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var repos []string
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		u, err := url.Parse(scanner.Text())
+		if err != nil {
+			return nil, err
+		}
+		repo := strings.TrimPrefix(u.Path, "/") // format to owner/reponame
+		repos = append(repos, repo)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+
+	return repos, nil
 }

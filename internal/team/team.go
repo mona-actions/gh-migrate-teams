@@ -1,6 +1,8 @@
 package team
 
 import (
+	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -150,4 +152,44 @@ func (t Teams) ExportTeamRepositories() [][]string {
 	}
 
 	return repositories
+}
+
+func GetRepositoryTeams(repository string) Teams {
+	//split the repository string to get the owner and repo name
+	repo := strings.Split(repository, "/")
+	owner := repo[0]
+	repoName := repo[1]
+	viper.Set("SOURCE_ORGANIZATION", owner)
+	data, err := api.GetRepositoryTeams(owner, repoName)
+
+	if err != nil {
+		log.Println("Unable to get repository teams - ", err)
+	}
+	parentTeamID := ""
+	parentTeamName := ""
+
+	teams := make(Teams, 0, len(data))
+	for _, team := range data {
+		log.Println("internal/getRepositoryTeams - team - ", team)
+		if team.Parent != nil {
+			parentTeamID = strconv.FormatInt(team.Parent.GetID(), 10)
+			parentTeamName = *team.Parent.Name
+			log.Println("internal/getRepositoryTeams - parent team id - ", parentTeamName)
+		}
+
+		team := Team{
+			Id:             strconv.FormatInt(team.GetID(), 10),
+			Name:           team.GetName(),
+			Slug:           team.GetSlug(),
+			Description:    team.GetDescription(),
+			Privacy:        team.GetPrivacy(),
+			ParentTeamId:   parentTeamID,
+			ParentTeamName: parentTeamName,
+			Members:        getTeamMemberships(*team.Slug),
+			Repositories:   getTeamRepositories(*team.Slug),
+		}
+		teams = append(teams, team)
+	}
+
+	return teams
 }

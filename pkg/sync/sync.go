@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/mona-actions/gh-migrate-teams/internal/repository"
 	"github.com/mona-actions/gh-migrate-teams/internal/team"
 	"github.com/pterm/pterm"
 )
@@ -71,4 +72,35 @@ func getTargetHandle(filename string, source_handle string) (string, error) {
 	}
 
 	return source_handle, nil
+}
+
+func SyncTeamsByRepo() {
+
+	teamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Fetching teams from repository list...")
+	repos, err := repository.ParseRepositoryFile(os.Getenv("GHMT_REPO_FILE"))
+	teams := []team.Team{}
+
+	if err != nil {
+		log.Println("error while reading repository file - ", err)
+		teamsSpinnerSuccess.Fail()
+		return
+	}
+	for _, repo := range repos {
+		// get all teams that have access to the repository and add them to the teams slice
+		teams = append(teams, team.GetRepositoryTeams(repo)...)
+	}
+	teamsSpinnerSuccess.Success()
+
+	// Create teams in target organization
+	createTeamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Creating teams in target organization...")
+	for _, team := range teams {
+		// Map members
+		if os.Getenv("GHMT_MAPPING_FILE") != "" {
+			log.Println("trying to map")
+			team = mapMembers(team)
+		}
+		log.Println("before create team", team)
+		team.CreateTeam()
+	}
+	createTeamsSpinnerSuccess.Success()
 }
