@@ -312,7 +312,7 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 	if parentTeamName != "" {
 		parentTeamID, err := GetTeamId(parentTeamName)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("Team ID Not found", err)
 		} else {
 			t.ParentTeamID = &parentTeamID
 		}
@@ -323,7 +323,7 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 
 	if err != nil {
 		if strings.Contains(err.Error(), "Name must be unique for this org") {
-			fmt.Println("Error creating team, team already exists: ", name)
+			fmt.Println("Team: ", name, "already exists in destination skipping...")
 			return err
 		} else {
 			fmt.Println("Unable to create team:", name, err.Error())
@@ -375,4 +375,17 @@ func GetTeamId(TeamName string) (int64, error) {
 		return 0, err
 	}
 	return *team.ID, nil
+}
+
+func GetRepositoryTeams(owner string, repo string) ([]*github.Team, error) {
+	client := newGHRestClient(viper.GetString("SOURCE_TOKEN"))
+	ctx := context.Background()
+
+	// Get teams for the repository
+	teams, _, err := client.Repositories.ListTeams(ctx, owner, repo, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return teams, nil
 }
