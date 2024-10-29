@@ -29,6 +29,7 @@ var byReposCmd = &cobra.Command{
 		mappingFile := cmd.Flag("mapping-file").Value.String()
 		ghHostname := cmd.Flag("source-hostname").Value.String()
 		repoFile := cmd.Flag("from-file").Value.String()
+		skipTeams := cmd.Flag("skip-teams").Value.String()
 
 		// Set ENV variables
 		os.Setenv("GHMT_TARGET_ORGANIZATION", targetOrganization)
@@ -37,6 +38,7 @@ var byReposCmd = &cobra.Command{
 		os.Setenv("GHMT_MAPPING_FILE", mappingFile)
 		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 		os.Setenv("GHMT_REPO_FILE", repoFile)
+		os.Setenv("GHMT_SKIP_TEAMS", skipTeams)
 
 		// Bind ENV variables in Viper
 		viper.BindEnv("TARGET_ORGANIZATION")
@@ -72,6 +74,8 @@ func init() {
 	byReposCmd.MarkFlagRequired("from-file")
 
 	byReposCmd.Flags().StringP("mapping-file", "m", "", "Mapping file path to use for mapping teams members handles")
+
+	byReposCmd.Flags().BoolP("skip-teams", "k", false, "Skips adding members and repos to teams that already exist to save on API requests (default \"false\")")
 
 	byReposCmd.Flags().StringP("source-hostname", "u", os.Getenv("SOURCE_HOST"), "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 }
