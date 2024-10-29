@@ -101,10 +101,8 @@ func SyncTeamsByRepo() {
 	for _, team := range teams {
 		// Map members
 		if os.Getenv("GHMT_MAPPING_FILE") != "" {
-			log.Println("trying to map")
 			team = mapMembers(team)
 		}
-		log.Println("before create team", team)
 		team.CreateTeam()
 	}
 	createTeamsSpinnerSuccess.Success()

@@ -5,7 +5,6 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/mona-actions/gh-migrate-teams/pkg/sync"
@@ -56,7 +55,6 @@ var byReposCmd = &cobra.Command{
 
 func init() {
 
-	log.Println("byRepos init")
 	syncCmd.AddCommand(byReposCmd)
 
 	// Here you will define your flags and configuration settings.
