@@ -389,3 +389,27 @@ func GetRepositoryTeams(owner string, repo string) ([]*github.Team, error) {
 
 	return teams, nil
 }
+
+func GetAuthenticatedUser() (*github.User, error) {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	ctx := context.Background()
+
+	// Get authenticated user
+	user, _, err := client.Users.Get(ctx, "")
+
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func RemoveTeamMember(slug string, member string) error {
+	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
+
+	_, err := client.Teams.RemoveTeamMembershipBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), slug, member)
+	if err != nil {
+		return err
+	}
+	return nil
+}

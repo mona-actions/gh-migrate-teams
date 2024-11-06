@@ -103,7 +103,12 @@ func SyncTeamsByRepo() {
 		if os.Getenv("GHMT_MAPPING_FILE") != "" {
 			team = mapMembers(team)
 		}
+
+		//update Spinner text with the team name
+		createTeamsSpinnerSuccess.UpdateText("Creating team in target organization: " + team.Name)
+
 		team.CreateTeam()
+
 	}
 	createTeamsSpinnerSuccess.Success()
 }
