@@ -125,8 +125,27 @@ func (t Team) CreateTeam() {
 		userSync := viper.GetString("USER_SYNC")
 
 		if userSync != "disable" {
+			authenticatedUser, err := api.GetAuthenticatedUser()
+			if err != nil {
+				log.Println("Unable to get authenticated user - ", err)
+			}
+
+			authUserLogin := authenticatedUser.GetLogin()
+
+			memberMap := make(map[string]bool)
 			for _, member := range t.Members {
+				memberMap[member.Login] = true
 				api.AddTeamMember(t.Slug, member.Login, member.Role)
+			}
+
+			//If authenticated user is not part of the members, remove them from the team
+			if authUserLogin != "" && !memberMap[authUserLogin] {
+				err := api.RemoveTeamMember(t.Slug, authenticatedUser.GetLogin())
+				if err != nil {
+					log.Println("Unable to remove authenticated user from team - ", err)
+				} else {
+					log.Println(authenticatedUser.GetLogin(), "removed from team as they are not part of the members list")
+				}
 			}
 		}
 	}
