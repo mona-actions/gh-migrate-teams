@@ -84,6 +84,7 @@ func SyncTeamsByRepo() {
 	teamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Fetching teams from repository list...")
 	repos, err := repository.ParseRepositoryFile(os.Getenv("GHMT_REPO_FILE"))
 	teams := []team.Team{}
+	teamMap := make(map[string]bool) // Map to track added teams
 
 	if err != nil {
 		log.Println("error while reading repository file - ", err)
@@ -91,8 +92,16 @@ func SyncTeamsByRepo() {
 		return
 	}
 	for _, repo := range repos {
-		// get all teams that have access to the repository and add them to the teams slice
-		teams = append(teams, team.GetRepositoryTeams(repo)...)
+		// get all teams that have access to the repository
+		repoTeams := team.GetRepositoryTeams(repo)
+		for _, t := range repoTeams {
+			// Check if the team is already in the map
+			if _, exists := teamMap[t.Id]; !exists {
+				// If the team is not in the map, add it to the map and the teams slice
+				teamMap[t.Id] = true
+				teams = append(teams, t)
+			}
+		}
 	}
 	teamsSpinnerSuccess.Success()
 
