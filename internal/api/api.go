@@ -379,7 +379,7 @@ func GetTeamId(TeamName string) (int64, error) {
 
 func GetRepositoryTeams(owner string, repo string) ([]*github.Team, error) {
 	client := newGHRestClient(viper.GetString("SOURCE_TOKEN"))
-	ctx := context.Background()
+	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	// Get teams for the repository
 	teams, _, err := client.Repositories.ListTeams(ctx, owner, repo, nil)
