@@ -3,7 +3,9 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
+	"time"
 
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
 	"github.com/google/go-github/v62/github"
@@ -12,9 +14,46 @@ import (
 	"golang.org/x/oauth2"
 )
 
-func newGHGraphqlClient(token string) *githubv4.Client {
+type RateLimitAwareGraphQLClient struct {
+	client *githubv4.Client
+}
+
+func (c *RateLimitAwareGraphQLClient) Query(ctx context.Context, q interface{}, variables map[string]interface{}) error {
+	var rateLimitQuery struct {
+		RateLimit struct {
+			Remaining int
+			ResetAt   githubv4.DateTime
+		}
+	}
+
+	for {
+		// Check the current rate limit
+		if err := c.client.Query(ctx, &rateLimitQuery, nil); err != nil {
+			return err
+		}
+
+		log.Println("Rate limit remaining:", rateLimitQuery.RateLimit.Remaining)
+
+		if rateLimitQuery.RateLimit.Remaining > 0 {
+			// Proceed with the actual query
+			err := c.client.Query(ctx, q, variables)
+			if err != nil {
+				return err
+			}
+			return nil
+		} else {
+			// Sleep until rate limit resets
+			log.Println("Rate limit exceeded, sleeping until reset at:", rateLimitQuery.RateLimit.ResetAt.Time)
+			time.Sleep(time.Until(rateLimitQuery.RateLimit.ResetAt.Time))
+
+		}
+	}
+}
+
+func newGHGraphqlClient(token string) *RateLimitAwareGraphQLClient {
 	hostname := viper.GetString("SOURCE_HOSTNAME")
-	var client *githubv4.Client
+	var baseClient *githubv4.Client
+
 	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	httpClient := oauth2.NewClient(context.Background(), src)
 	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(httpClient.Transport)
@@ -22,16 +61,20 @@ func newGHGraphqlClient(token string) *githubv4.Client {
 	if err != nil {
 		panic(err)
 	}
-	client = githubv4.NewClient(rateLimiter)
 
 	// Trim any trailing slashes from the hostname
 	hostname = strings.TrimSuffix(hostname, "/")
 
 	// If hostname is received, create a new client with the hostname
 	if hostname != "" {
-		client = githubv4.NewEnterpriseClient(hostname+"/api/graphql", rateLimiter)
+		baseClient = githubv4.NewEnterpriseClient(hostname+"/api/graphql", rateLimiter)
+	} else {
+		baseClient = githubv4.NewClient(rateLimiter)
 	}
-	return client
+
+	return &RateLimitAwareGraphQLClient{
+		client: baseClient,
+	}
 }
 
 func newGHRestClient(token string) *github.Client {
