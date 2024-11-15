@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/repository"
@@ -85,6 +86,7 @@ func SyncTeamsByRepo() {
 	repos, err := repository.ParseRepositoryFile(os.Getenv("GHMT_REPO_FILE"))
 	teams := []team.Team{}
 	teamMap := make(map[string]bool) // Map to track added teams
+	totalMembers := 0
 
 	if err != nil {
 		log.Println("error while reading repository file - ", err)
@@ -100,9 +102,13 @@ func SyncTeamsByRepo() {
 				// If the team is not in the map, add it to the map and the teams slice
 				teamMap[t.Id] = true
 				teams = append(teams, t)
+				totalMembers += len(t.Members)
 			}
 		}
 	}
+	// Print out how many teams were found:
+	teamsSpinnerSuccess.UpdateText("Fetched a total of " + strconv.Itoa(len(teams)) + " teams with total of " + strconv.Itoa(totalMembers) + " members from the repository list")
+
 	teamsSpinnerSuccess.Success()
 
 	// Create teams in target organization

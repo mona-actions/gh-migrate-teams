@@ -43,7 +43,9 @@ func (c *RateLimitAwareGraphQLClient) Query(ctx context.Context, q interface{}, 
 			return nil
 		} else {
 			// Sleep until rate limit resets
+			log.Println("Rate limit exceeded, sleeping until reset at:", rateLimitQuery.RateLimit.ResetAt.Time)
 			time.Sleep(time.Until(rateLimitQuery.RateLimit.ResetAt.Time))
+
 		}
 	}
 }
