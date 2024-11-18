@@ -4,15 +4,61 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/gofri/go-github-ratelimit/github_ratelimit"
 	"github.com/google/go-github/v62/github"
+	"github.com/jferrl/go-githubauth"
 	"github.com/shurcooL/githubv4"
 	"github.com/spf13/viper"
 	"golang.org/x/oauth2"
 )
+
+func newHTTPClient() *http.Client {
+
+	token := viper.GetString("TARGET_TOKEN")
+	appId := viper.GetString("TARGET_APP_ID")
+	privateKey := viper.GetString("TARGET_PRIVATE_KEY")
+	installationId := viper.GetInt64("TARGET_INSTALLATION_ID")
+
+	// check that Target token or GitHub App values are set
+	if token != "" && (appId == "" || privateKey == "" || installationId == 0) {
+		log.Fatalf("Please provide a target token or a target GitHub App ID and private key")
+	}
+
+	if appId != "" && privateKey != "" && installationId != 0 {
+		// GitHub App authentication
+		pemBytes, err := os.ReadFile(privateKey)
+		if err != nil {
+			log.Fatalf("Error reading private key: %v", err)
+		}
+		appIdInt, err := strconv.ParseInt(appId, 10, 64)
+		if err != nil {
+			log.Fatalf("Error converting app ID to int64: %v", err)
+		}
+		appToken, err := githubauth.NewApplicationTokenSource(appIdInt, pemBytes)
+		if err != nil {
+			log.Fatalf("Error creating app token: %v", err)
+		}
+
+		installationToken := githubauth.NewInstallationTokenSource(installationId, appToken)
+
+		// Create HTTP client with automatic token refresh
+		httpClient := oauth2.NewClient(context.Background(), installationToken)
+
+		return httpClient
+
+	} else {
+		// Personal access token authentication
+		token := viper.GetString("TARGET_TOKEN")
+		src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+		return oauth2.NewClient(context.Background(), src)
+	}
+}
 
 type RateLimitAwareGraphQLClient struct {
 	client *githubv4.Client
@@ -77,7 +123,19 @@ func newGHGraphqlClient(token string) *RateLimitAwareGraphQLClient {
 	}
 }
 
-func newGHRestClient(token string) *github.Client {
+func newGHRestClient() *github.Client {
+	httpClient := newHTTPClient()
+	rateLimiter, err := github_ratelimit.NewRateLimitWaiterClient(httpClient.Transport)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return github.NewClient(rateLimiter)
+}
+
+func newSourceGHRestClient() *github.Client {
+	token := viper.GetString("SOURCE_TOKEN")
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
@@ -349,7 +407,7 @@ func GetRepositoryCollaborators(repository string) []map[string]string {
 }
 
 func CreateTeam(name string, description string, privacy string, parentTeamName string) error {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 
 	t := github.NewTeam{Name: name, Description: &description, Privacy: &privacy}
 	if parentTeamName != "" {
@@ -377,7 +435,7 @@ func CreateTeam(name string, description string, privacy string, parentTeamName 
 }
 
 func AddTeamRepository(slug string, repo string, permission string) {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 
 	fmt.Println("Adding repository to team: ", slug, repo, permission)
 
@@ -396,7 +454,7 @@ func AddTeamRepository(slug string, repo string, permission string) {
 }
 
 func AddTeamMember(slug string, member string, role string) {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 
 	role = strings.ToLower(role) // lowercase to match github api
 	fmt.Println("Adding member to team: ", slug, member, role)
@@ -409,7 +467,7 @@ func AddTeamMember(slug string, member string, role string) {
 }
 
 func GetTeamId(TeamName string) (int64, error) {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 
 	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 	team, _, err := client.Teams.GetTeamBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), TeamName)
@@ -421,7 +479,7 @@ func GetTeamId(TeamName string) (int64, error) {
 }
 
 func GetRepositoryTeams(owner string, repo string) ([]*github.Team, error) {
-	client := newGHRestClient(viper.GetString("SOURCE_TOKEN"))
+	client := newSourceGHRestClient()
 	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	// Get teams for the repository
@@ -434,7 +492,7 @@ func GetRepositoryTeams(owner string, repo string) ([]*github.Team, error) {
 }
 
 func GetAuthenticatedUser() (*github.User, error) {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 	ctx := context.Background()
 
 	// Get authenticated user
@@ -447,7 +505,7 @@ func GetAuthenticatedUser() (*github.User, error) {
 }
 
 func RemoveTeamMember(slug string, member string) error {
-	client := newGHRestClient(viper.GetString("TARGET_TOKEN"))
+	client := newGHRestClient()
 	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 
 	_, err := client.Teams.RemoveTeamMembershipBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), slug, member)
