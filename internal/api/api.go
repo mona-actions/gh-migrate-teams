@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -22,25 +21,22 @@ func newHTTPClient() *http.Client {
 
 	token := viper.GetString("TARGET_TOKEN")
 	appId := viper.GetString("TARGET_APP_ID")
-	privateKey := viper.GetString("TARGET_PRIVATE_KEY")
+	privateKey := []byte(viper.GetString("TARGET_PRIVATE_KEY"))
 	installationId := viper.GetInt64("TARGET_INSTALLATION_ID")
 
 	// check that Target token or GitHub App values are set
-	if token != "" && (appId == "" || privateKey == "" || installationId == 0) {
+	if token != "" && (appId == "" || len(privateKey) == 0 || installationId == 0) {
 		log.Fatalf("Please provide a target token or a target GitHub App ID and private key")
 	}
 
-	if appId != "" && privateKey != "" && installationId != 0 {
+	if appId != "" && len(privateKey) != 0 && installationId != 0 {
 		// GitHub App authentication
-		pemBytes, err := os.ReadFile(privateKey)
-		if err != nil {
-			log.Fatalf("Error reading private key: %v", err)
-		}
+
 		appIdInt, err := strconv.ParseInt(appId, 10, 64)
 		if err != nil {
 			log.Fatalf("Error converting app ID to int64: %v", err)
 		}
-		appToken, err := githubauth.NewApplicationTokenSource(appIdInt, pemBytes)
+		appToken, err := githubauth.NewApplicationTokenSource(appIdInt, privateKey)
 		if err != nil {
 			log.Fatalf("Error creating app token: %v", err)
 		}
@@ -499,6 +495,9 @@ func GetAuthenticatedUser() (*github.User, error) {
 	user, _, err := client.Users.Get(ctx, "")
 
 	if err != nil {
+		if strings.Contains(err.Error(), "403 Resource not accessible by integration") {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return user, nil

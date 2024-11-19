@@ -1,17 +1,18 @@
 module github.com/mona-actions/gh-migrate-teams
 
-go 1.21
+go 1.23
 
-toolchain go1.21.6
+toolchain go1.23.3
 
 require (
 	github.com/gofri/go-github-ratelimit v1.1.0
 	github.com/google/go-github/v62 v62.0.0
+	github.com/jferrl/go-githubauth v1.1.1
 	github.com/pterm/pterm v0.12.79
 	github.com/shurcooL/githubv4 v0.0.0-20240429030203-be2daab69064
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	golang.org/x/oauth2 v0.20.0
+	golang.org/x/oauth2 v0.24.0
 )
 
 require (
@@ -20,6 +21,8 @@ require (
 	atomicgo.dev/schedule v0.1.0 // indirect
 	github.com/containerd/console v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
+	github.com/google/go-github/v64 v64.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gookit/color v1.5.4 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect

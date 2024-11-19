@@ -4,7 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/mona-actions/gh-migrate-teams/pkg/sync"
@@ -20,7 +19,6 @@ var byReposCmd = &cobra.Command{
 	
 	It will migrate all the teams that have access to the repositories in the list.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("byRepos called")
 
 		targetOrganization := cmd.Flag("target-organization").Value.String()
 		sourceToken := cmd.Flag("source-token").Value.String()
@@ -29,7 +27,6 @@ var byReposCmd = &cobra.Command{
 		ghHostname := cmd.Flag("source-hostname").Value.String()
 		repoFile := cmd.Flag("from-file").Value.String()
 		skipTeams := cmd.Flag("skip-teams").Value.String()
-		tPrivateKeyPath := cmd.Flag("target-private-key").Value.String()
 		tAppId := cmd.Flag("target-app-id").Value.String()
 		tInstallationId := cmd.Flag("target-installation-id").Value.String()
 
@@ -41,7 +38,6 @@ var byReposCmd = &cobra.Command{
 		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 		os.Setenv("GHMT_REPO_FILE", repoFile)
 		os.Setenv("GHMT_SKIP_TEAMS", skipTeams)
-		os.Setenv("GHMT_TARGET_PRIVATE_KEY", tPrivateKeyPath)
 		os.Setenv("GHMT_TARGET_APP_ID", tAppId)
 		os.Setenv("GHMT_TARGET_INSTALLATION_ID", tInstallationId)
 
@@ -85,7 +81,8 @@ func init() {
 
 	byReposCmd.Flags().StringP("source-hostname", "u", os.Getenv("SOURCE_HOST"), "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 
-	byReposCmd.Flags().StringP("target-private-key", "p", "", "Private key for GitHub App authentication")
+	byReposCmd.Flags().StringP("target-private-key", "p", "", "Private key for GitHub App authentication. Ideally set as an env variable `GHMT_TARGET_PRIVATE_KEY`")
+	viper.BindPFlag("TARGET_PRIVATE_KEY", byReposCmd.Flags().Lookup("target-private-key"))
 
 	byReposCmd.Flags().StringP("target-app-id", "i", "", "GitHub App ID")
 
