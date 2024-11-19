@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b #v4.1.4
-      - uses: cli/gh-extension-precompile@v1
+      - uses: cli/gh-extension-precompile@v2
         with:
-          go_version: 1.21
+          go_version: 1.23

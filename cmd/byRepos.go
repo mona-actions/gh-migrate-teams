@@ -81,7 +81,7 @@ func init() {
 
 	byReposCmd.Flags().StringP("source-hostname", "u", os.Getenv("SOURCE_HOST"), "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 
-	byReposCmd.Flags().StringP("target-private-key", "p", "", "Private key for GitHub App authentication. Ideally set as an env variable `GHMT_TARGET_PRIVATE_KEY`")
+	byReposCmd.Flags().StringP("target-private-key", "p", "", "Private key for GitHub App authentication. Ideally set as an env variable: 'GHMT_TARGET_PRIVATE_KEY'")
 	viper.BindPFlag("TARGET_PRIVATE_KEY", byReposCmd.Flags().Lookup("target-private-key"))
 
 	byReposCmd.Flags().StringP("target-app-id", "i", "", "GitHub App ID")
