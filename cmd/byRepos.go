@@ -4,7 +4,6 @@ Copyright © 2024 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/mona-actions/gh-migrate-teams/pkg/sync"
@@ -20,7 +19,6 @@ var byReposCmd = &cobra.Command{
 	
 	It will migrate all the teams that have access to the repositories in the list.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("byRepos called")
 
 		targetOrganization := cmd.Flag("target-organization").Value.String()
 		sourceToken := cmd.Flag("source-token").Value.String()
@@ -29,6 +27,8 @@ var byReposCmd = &cobra.Command{
 		ghHostname := cmd.Flag("source-hostname").Value.String()
 		repoFile := cmd.Flag("from-file").Value.String()
 		skipTeams := cmd.Flag("skip-teams").Value.String()
+		tAppId := cmd.Flag("target-app-id").Value.String()
+		tInstallationId := cmd.Flag("target-installation-id").Value.String()
 
 		// Set ENV variables
 		os.Setenv("GHMT_TARGET_ORGANIZATION", targetOrganization)
@@ -38,6 +38,8 @@ var byReposCmd = &cobra.Command{
 		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 		os.Setenv("GHMT_REPO_FILE", repoFile)
 		os.Setenv("GHMT_SKIP_TEAMS", skipTeams)
+		os.Setenv("GHMT_TARGET_APP_ID", tAppId)
+		os.Setenv("GHMT_TARGET_INSTALLATION_ID", tInstallationId)
 
 		// Bind ENV variables in Viper
 		viper.BindEnv("TARGET_ORGANIZATION")
@@ -48,6 +50,9 @@ var byReposCmd = &cobra.Command{
 		viper.BindEnv("USER_SYNC")
 		viper.BindEnv("SKIP_TEAMS")
 		viper.BindEnv("REPO_FILE")
+		viper.BindEnv("TARGET_PRIVATE_KEY")
+		viper.BindEnv("TARGET_APP_ID")
+		viper.BindEnv("TARGET_INSTALLATION_ID")
 
 		sync.SyncTeamsByRepo()
 	},
@@ -66,7 +71,6 @@ func init() {
 	byReposCmd.MarkFlagRequired("source-token")
 
 	byReposCmd.Flags().StringP("target-token", "b", "", "Target Organization GitHub token. Scopes: admin:org")
-	byReposCmd.MarkFlagRequired("target-token")
 
 	byReposCmd.Flags().StringP("from-file", "f", "repositories.txt", "File path to use for repository list")
 	byReposCmd.MarkFlagRequired("from-file")
@@ -76,4 +80,11 @@ func init() {
 	byReposCmd.Flags().BoolP("skip-teams", "k", false, "Skips adding members and repos to teams that already exist to save on API requests (default \"false\")")
 
 	byReposCmd.Flags().StringP("source-hostname", "u", os.Getenv("SOURCE_HOST"), "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
+
+	byReposCmd.Flags().StringP("target-private-key", "p", "", "Private key for GitHub App authentication. Ideally set as an env variable: 'GHMT_TARGET_PRIVATE_KEY'")
+	viper.BindPFlag("TARGET_PRIVATE_KEY", byReposCmd.Flags().Lookup("target-private-key"))
+
+	byReposCmd.Flags().StringP("target-app-id", "i", "", "GitHub App ID")
+
+	byReposCmd.Flags().Int64P("target-installation-id", "l", 0, "GitHub App Installation ID")
 }
