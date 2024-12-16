@@ -1,7 +1,9 @@
 package team
 
 import (
+	"encoding/csv"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -79,6 +81,18 @@ func getTeamMemberships(team string) []Member {
 }
 
 func getTeamRepositories(team string) []Repository {
+
+	//check if the repo-mappings.csv file exists
+	filePath := viper.GetString("REPO_MAPPING_FILE")
+	var repoMappings map[string]string
+	if _, err := os.Stat(filePath); err == nil {
+		// Read repo mappings
+		repoMappings, err = readMappings(filePath)
+		if err != nil {
+			log.Println("Unable to read repo mappings - ", err)
+		}
+	}
+
 	data := api.GetTeamRepositories(team)
 
 	repositories := make([]Repository, 0)
@@ -92,8 +106,16 @@ func getTeamRepositories(team string) []Repository {
 				permission = "admin"
 			}
 
+			repoName := repository["Name"]
+			sourceOrg := viper.GetString("SOURCE_ORGANIZATION")
+			repoWithOwner := sourceOrg + "/" + repoName
+			// Check if the repository name exists in the mappings
+			if newName, exists := repoMappings[repoWithOwner]; exists {
+				repoName = newName
+			}
+
 			repositories = append(repositories, Repository{
-				Name:       repository["Name"],
+				Name:       repoName,
 				Permission: permission,
 			})
 		}
@@ -187,6 +209,17 @@ func GetRepositoryTeams(repository string) Teams {
 	parentTeamID := ""
 	parentTeamName := ""
 
+	// Check if the team-mappings.csv file exists
+	filePath := viper.GetString("TEAM_MAPPING_FILE")
+	var teamMappings map[string]string
+	if _, err := os.Stat(filePath); err == nil {
+		// Read team mappings
+		teamMappings, err = readMappings(filePath)
+		if err != nil {
+			log.Println("Unable to read team mappings - ", err)
+		}
+	}
+
 	teams := make(Teams, 0, len(data))
 	for _, team := range data {
 		if team.Parent != nil {
@@ -194,10 +227,18 @@ func GetRepositoryTeams(repository string) Teams {
 			parentTeamName = *team.Parent.Name
 		}
 
+		teamName := team.GetName()
+		teamSlug := team.GetSlug()
+		// Check if the team name exists in the mappings
+		if newName, exists := teamMappings[owner+"/"+teamName]; exists {
+			teamName = newName
+			teamSlug = newName
+		}
+
 		team := Team{
 			Id:             strconv.FormatInt(team.GetID(), 10),
-			Name:           team.GetName(),
-			Slug:           team.GetSlug(),
+			Name:           teamName,
+			Slug:           teamSlug,
 			Description:    team.GetDescription(),
 			Privacy:        team.GetPrivacy(),
 			ParentTeamId:   parentTeamID,
@@ -209,4 +250,26 @@ func GetRepositoryTeams(repository string) Teams {
 	}
 
 	return teams
+}
+
+func readMappings(filePath string) (map[string]string, error) {
+	mappings := make(map[string]string)
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+	records, err := reader.ReadAll()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, record := range records[1:] { // Skip header
+		mappings[record[0]] = record[1]
+	}
+
+	return mappings, nil
 }
