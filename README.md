@@ -8,6 +8,9 @@
 gh extension install mona-actions/gh-migrate-teams
 ```
 
+>[!NOTE]
+> If setting any environmental variables through this CLI extension, make sure to add the `GHMT` prefix. For example, `GHMT_TOKEN` instead of `TOKEN`.
+
 ## Usage: Export
 
 Export team membership, team repository access, and repository collaborator access to CSV files.
@@ -42,6 +45,25 @@ Flags:
   -t, --target-organization string   Target Organization to sync teams from
   -b, --target-token string          Target Organization GitHub token. Scopes: admin:org
   -z, --user-sync string             User sync mode. One of: all, disable (default "none") (default "all")
+```
+
+### Sync by Repository List
+
+You can also sync teams by providing a list of repositories to sync. This is useful when you want to sync a subset of repositories from the source organization to the target organization.
+
+```bash
+Usage:
+  migrate-teams sync byRepos [flags]
+
+Flags:
+  -f, --from-file string             File path to use for repository list (default "repositories.txt")
+  -h, --help                         help for byRepos
+  -m, --mapping-file string          Mapping file path to use for mapping teams members handles
+  -k, --skip-teams                   Skips adding members and repos to teams that already exist to save on API requests (default "false")
+  -u, --source-hostname string       GitHub Enterprise source hostname url (optional) Ex. https://github.example.com
+  -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
+  -t, --target-organization string   Target Organization to sync teams from
+  -b, --target-token string          Target Organization GitHub token. Scopes: admin:org
 ```
 
 ### Mapping File Example

@@ -109,6 +109,11 @@ func SyncTeamsByRepo() {
 	// Print out how many teams were found:
 	teamsSpinnerSuccess.UpdateText("Fetched a total of " + strconv.Itoa(len(teams)) + " teams with total of " + strconv.Itoa(totalMembers) + " members from the repository list")
 
+	if len(teams) == 0 {
+		teamsSpinnerSuccess.Fail()
+		return
+	}
+
 	teamsSpinnerSuccess.Success()
 
 	// Create teams in target organization
@@ -125,5 +130,6 @@ func SyncTeamsByRepo() {
 		team.CreateTeam()
 
 	}
+	createTeamsSpinnerSuccess.UpdateText("Team creation process completed")
 	createTeamsSpinnerSuccess.Success()
 }
