@@ -27,7 +27,7 @@ func newHTTPClient() *http.Client {
 	// check that Target token or GitHub App values are set
 	if token == "" && (appId == "" || len(privateKey) == 0 || installationId == 0) {
 		log.Fatalf(
-			"Please provide a target token or a target GitHub App ID and private key \n Received: length of token: %v, length of private key: %v, installation ID: %v", len(token), len(privateKey), installationId)
+			"Please provide a target token or a target GitHub App ID and private key.")
 	}
 
 	if appId != "" && len(privateKey) != 0 && installationId != 0 {
