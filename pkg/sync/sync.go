@@ -111,6 +111,7 @@ func SyncTeamsByRepo() {
 
 	if len(teams) == 0 {
 		teamsSpinnerSuccess.Fail()
+		log.Fatalf("No teams found fetched. Check the values of org, repos, tokens to ensure they are correct. Check logs for more details.")
 		return
 	}
 
