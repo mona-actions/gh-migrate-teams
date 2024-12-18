@@ -25,8 +25,9 @@ func newHTTPClient() *http.Client {
 	installationId := viper.GetInt64("TARGET_INSTALLATION_ID")
 
 	// check that Target token or GitHub App values are set
-	if token != "" && (appId == "" || len(privateKey) == 0 || installationId == 0) {
-		log.Fatalf("Please provide a target token or a target GitHub App ID and private key")
+	if token == "" && (appId == "" || len(privateKey) == 0 || installationId == 0) {
+		log.Fatalf(
+			"Please provide a target token or a target GitHub App ID and private key.")
 	}
 
 	if appId != "" && len(privateKey) != 0 && installationId != 0 {
@@ -48,12 +49,11 @@ func newHTTPClient() *http.Client {
 
 		return httpClient
 
-	} else {
-		// Personal access token authentication
-		token := viper.GetString("TARGET_TOKEN")
-		src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-		return oauth2.NewClient(context.Background(), src)
 	}
+	// Personal access token authentication
+	src := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	return oauth2.NewClient(context.Background(), src)
+
 }
 
 type RateLimitAwareGraphQLClient struct {
@@ -109,6 +109,10 @@ func newGHGraphqlClient(token string) *RateLimitAwareGraphQLClient {
 
 	// If hostname is received, create a new client with the hostname
 	if hostname != "" {
+		hostname = strings.TrimSuffix(hostname, "/")
+		if !strings.HasPrefix(hostname, "https://") {
+			hostname = "https://" + hostname
+		}
 		baseClient = githubv4.NewEnterpriseClient(hostname+"/api/graphql", rateLimiter)
 	} else {
 		baseClient = githubv4.NewClient(rateLimiter)
@@ -132,6 +136,7 @@ func newGHRestClient() *github.Client {
 
 func newSourceGHRestClient() *github.Client {
 	token := viper.GetString("SOURCE_TOKEN")
+	hostname := viper.GetString("SOURCE_HOSTNAME")
 	ctx := context.Background()
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
@@ -139,6 +144,19 @@ func newSourceGHRestClient() *github.Client {
 
 	if err != nil {
 		panic(err)
+	}
+
+	if hostname != "" {
+		hostname = strings.TrimSuffix(hostname, "/")
+		if !strings.HasPrefix(hostname, "https://") {
+			hostname = "https://" + hostname
+		}
+		baseURL := fmt.Sprintf("%s/api/v3/", hostname)
+		client, err := github.NewClient(rateLimiter).WithEnterpriseURLs(baseURL, baseURL)
+		if err != nil {
+			panic(err)
+		}
+		return client
 	}
 
 	return github.NewClient(rateLimiter)
