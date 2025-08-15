@@ -462,7 +462,7 @@ func AddTeamRepository(slug string, repo string, permission string) {
 		} else if strings.Contains(err.Error(), "404 Not Found") {
 			fmt.Println("Error adding repository to team, repository not found: ", slug, repo, permission)
 		} else {
-			fmt.Println("adding repository to team: ", slug, repo, permission, "Unknown error", err, err.Error())
+			fmt.Println("error adding repository", repo, " to team: ", slug, "with permissions:", permission, "Unknown error", err, err.Error())
 		}
 	}
 }
@@ -476,7 +476,7 @@ func AddTeamMember(slug string, member string, role string) {
 	ctx := context.WithValue(context.Background(), github.SleepUntilPrimaryRateLimitResetWhenRateLimited, true)
 	_, _, err := client.Teams.AddTeamMembershipBySlug(ctx, viper.Get("TARGET_ORGANIZATION").(string), slug, member, &github.TeamAddTeamMembershipOptions{Role: role})
 	if err != nil {
-		fmt.Println("Error adding member to team: ", slug, member, err)
+		fmt.Println("Error adding member ", member, " to team: ", slug, err)
 	}
 }
 

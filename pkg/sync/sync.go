@@ -93,7 +93,10 @@ func SyncTeamsByRepo() {
 		teamsSpinnerSuccess.Fail()
 		return
 	}
+	log.Println("Fetched a total of " + strconv.Itoa(len(repos)) + " repositories from the repository list")
+
 	for _, repo := range repos {
+		log.Println("Fetching teams for repository: " + repo)
 		// get all teams that have access to the repository
 		repoTeams := team.GetRepositoryTeams(repo)
 		for _, t := range repoTeams {
@@ -126,7 +129,7 @@ func SyncTeamsByRepo() {
 		}
 
 		//update Spinner text with the team name
-		createTeamsSpinnerSuccess.UpdateText("Creating team in target organization: " + team.Name)
+		log.Println("Creating team in target organization: " + team.Name)
 
 		team.CreateTeam()
 
