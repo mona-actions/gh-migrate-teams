@@ -96,7 +96,7 @@ func filterTeamRepositories(t team.Team, repoList []string) team.Team {
 	// Filter repositories to only include those in the migration list
 	// We'll build a new slice by iterating through existing repositories
 	originalRepos := t.Repositories
-	t.Repositories = nil // Clear the slice
+	t.Repositories = []team.Repository{} // Initialize with empty slice
 
 	for _, repo := range originalRepos {
 		if repoMap[repo.Name] {
