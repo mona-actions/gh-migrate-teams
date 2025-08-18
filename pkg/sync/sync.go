@@ -155,8 +155,13 @@ func SyncTeamsByRepo() {
 			team = mapMembers(team)
 		}
 
-		// Filter repositories to only include those in the migration list
-		team = filterTeamRepositories(team, repos)
+		// Filter repositories to only include those in the migration list (unless disabled)
+		includeAllRepos, _ := strconv.ParseBool(os.Getenv("GHMT_INCLUDE_ALL_REPOS"))
+
+		if !includeAllRepos {
+			// only process repositories from repo-file
+			team = filterTeamRepositories(team, repos)
+		}
 
 		//update Spinner text with the team name
 		log.Println("Creating team in target organization: " + team.Name)
