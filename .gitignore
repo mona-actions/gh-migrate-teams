@@ -32,3 +32,4 @@ scratch
 *.csv
 *.log
 .vscode
+.env
