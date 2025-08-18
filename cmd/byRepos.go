@@ -5,6 +5,7 @@ package cmd
 
 import (
 	"os"
+	"strconv"
 
 	"github.com/mona-actions/gh-migrate-teams/pkg/sync"
 	"github.com/spf13/cobra"
@@ -27,6 +28,7 @@ var byReposCmd = &cobra.Command{
 		ghHostname := cmd.Flag("source-hostname").Value.String()
 		repoFile := cmd.Flag("from-file").Value.String()
 		skipTeams := cmd.Flag("skip-teams").Value.String()
+		includeAllRepos, _ := cmd.Flags().GetBool("include-all-repos")
 		tAppId := cmd.Flag("target-app-id").Value.String()
 		tInstallationId := cmd.Flag("target-installation-id").Value.String()
 
@@ -38,6 +40,7 @@ var byReposCmd = &cobra.Command{
 		os.Setenv("GHMT_SOURCE_HOSTNAME", ghHostname)
 		os.Setenv("GHMT_REPO_FILE", repoFile)
 		os.Setenv("GHMT_SKIP_TEAMS", skipTeams)
+		os.Setenv("GHMT_INCLUDE_ALL_REPOS", strconv.FormatBool(includeAllRepos))
 		os.Setenv("GHMT_TARGET_APP_ID", tAppId)
 		os.Setenv("GHMT_TARGET_INSTALLATION_ID", tInstallationId)
 
@@ -50,6 +53,7 @@ var byReposCmd = &cobra.Command{
 		viper.BindEnv("USER_SYNC")
 		viper.BindEnv("SKIP_TEAMS")
 		viper.BindEnv("REPO_FILE")
+		viper.BindEnv("INCLUDE_ALL_REPOS")
 		viper.BindEnv("TARGET_PRIVATE_KEY")
 		viper.BindEnv("TARGET_APP_ID")
 		viper.BindEnv("TARGET_INSTALLATION_ID")
@@ -78,6 +82,8 @@ func init() {
 	byReposCmd.Flags().StringP("mapping-file", "m", "", "Mapping file path to use for mapping teams members handles")
 
 	byReposCmd.Flags().BoolP("skip-teams", "k", false, "Skips adding members and repos to teams that already exist to save on API requests (default \"false\")")
+
+	byReposCmd.Flags().BoolP("include-all-repos", "r", false, "Include all repositories that teams had access to in source, not just those in the migration list (default \"false\")")
 
 	byReposCmd.Flags().StringP("source-hostname", "u", os.Getenv("SOURCE_HOST"), "GitHub Enterprise source hostname url (optional) Ex. https://github.example.com")
 

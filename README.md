@@ -58,12 +58,26 @@ Usage:
 Flags:
   -f, --from-file string             File path to use for repository list (default "repositories.txt")
   -h, --help                         help for byRepos
+  -r, --include-all-repos            Include all repositories that teams had access to in source, not just those in the migration list (default "false")
   -m, --mapping-file string          Mapping file path to use for mapping teams members handles
   -k, --skip-teams                   Skips adding members and repos to teams that already exist to save on API requests (default "false")
   -u, --source-hostname string       GitHub Enterprise source hostname url (optional) Ex. https://github.example.com
   -a, --source-token string          Source Organization GitHub token. Scopes: read:org, read:user, user:email
+  -i, --target-app-id string         GitHub App ID
+  -l, --target-installation-id int   GitHub App Installation ID
   -t, --target-organization string   Target Organization to sync teams from
+  -p, --target-private-key string    Private key for GitHub App authentication. Ideally set as an env variable: 'GHMT_TARGET_PRIVATE_KEY'
   -b, --target-token string          Target Organization GitHub token. Scopes: admin:org
+```
+
+>[!Note]
+> If using GitHub App authentication, the GitHub App's Private Key needs to be set as an environment variable `GHMT_TARGET_PRIVATE_KEY` to avoid passing it directly in the command line.
+
+#### Repository List Example
+
+```txt
+owner/repo
+https://github.example.com/owner/repo
 ```
 
 ### Mapping File Example

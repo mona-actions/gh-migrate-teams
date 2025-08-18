@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/mona-actions/gh-migrate-teams/internal/repository"
 	"github.com/mona-actions/gh-migrate-teams/internal/team"
@@ -80,9 +81,35 @@ func getTargetHandle(filename string, source_handle string) (string, error) {
 	return source_handle, nil
 }
 
+// filterTeamRepositories filters a team's repositories to only include those in the repository list
+func filterTeamRepositories(t team.Team, repoList []string) team.Team {
+	// Create a map for faster lookup of repositories in the migration list
+	repoMap := make(map[string]bool)
+	for _, repo := range repoList {
+		// Extract just the repository name from owner/repo format
+		parts := strings.Split(repo, "/")
+		if len(parts) == 2 {
+			repoMap[parts[1]] = true
+		}
+	}
+
+	// Filter repositories to only include those in the migration list
+	// We'll build a new slice by iterating through existing repositories
+	originalRepos := t.Repositories
+	t.Repositories = []team.Repository{} // Initialize with empty slice
+
+	for _, repo := range originalRepos {
+		if repoMap[repo.Name] {
+			t.Repositories = append(t.Repositories, repo)
+		}
+	}
+
+	return t
+}
+
 func SyncTeamsByRepo() {
 
-	teamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Fetching teams from repository list...")
+	teamsSpinnerSuccess, _ := pterm.DefaultSpinner.WithDelay(1 * time.Minute).Start("Fetching teams from repository list...")
 	repos, err := repository.ParseRepositoryFile(os.Getenv("GHMT_REPO_FILE"))
 	teams := []team.Team{}
 	teamMap := make(map[string]bool) // Map to track added teams
@@ -126,6 +153,14 @@ func SyncTeamsByRepo() {
 		// Map members
 		if os.Getenv("GHMT_MAPPING_FILE") != "" {
 			team = mapMembers(team)
+		}
+
+		// Filter repositories to only include those in the migration list (unless disabled)
+		includeAllRepos, _ := strconv.ParseBool(os.Getenv("GHMT_INCLUDE_ALL_REPOS"))
+
+		if !includeAllRepos {
+			// only process repositories from repo-file
+			team = filterTeamRepositories(team, repos)
 		}
 
 		//update Spinner text with the team name
