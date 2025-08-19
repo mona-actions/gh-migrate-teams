@@ -74,7 +74,10 @@ func (c *RateLimitAwareGraphQLClient) Query(ctx context.Context, q interface{}, 
 			return err
 		}
 
-		log.Println("Rate limit remaining:", rateLimitQuery.RateLimit.Remaining)
+		// Only log when rate limit is getting low (under 100) or when we hit the limit
+		if rateLimitQuery.RateLimit.Remaining < 100 {
+			log.Println("Rate limit remaining:", rateLimitQuery.RateLimit.Remaining)
+		}
 
 		if rateLimitQuery.RateLimit.Remaining > 0 {
 			// Proceed with the actual query

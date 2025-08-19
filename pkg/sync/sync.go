@@ -148,7 +148,7 @@ func SyncTeamsByRepo() {
 	teamsSpinnerSuccess.Success()
 
 	// Create teams in target organization
-	createTeamsSpinnerSuccess, _ := pterm.DefaultSpinner.Start("Creating teams in target organization...")
+	createTeamsSpinnerSuccess, _ := pterm.DefaultSpinner.WithDelay(1 * time.Minute).Start("Creating teams in target organization...")
 	for _, team := range teams {
 		// Map members
 		if os.Getenv("GHMT_MAPPING_FILE") != "" {
